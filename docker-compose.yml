@@ -1,0 +1,36 @@
+services:
+  dsp:
+    build: ./dsp-rust
+    environment:
+      BABELGRID_DSP_ADDR: 0.0.0.0:8092
+    ports:
+      - "8092:8092"
+
+  grid:
+    build: ./grid-python
+    ports:
+      - "8000:8000"
+
+  sfu:
+    build: ./sfu-go
+    environment:
+      BABELGRID_ADDR: ":8080"
+      BABELGRID_DSP_URL: http://dsp:8092
+      BABELGRID_GRID_URL: http://grid:8000
+      BABELGRID_TARGETS: "es,fr,de"
+      BABELGRID_WORKERS: "4"
+      BABELGRID_SYNTH: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dsp
+      - grid
+
+  client:
+    build: ./client-ts
+    environment:
+      NEXT_PUBLIC_SFU_URL: ws://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - sfu
